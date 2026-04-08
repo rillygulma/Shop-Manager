@@ -101,7 +101,6 @@ export default function Sales() {
           </button>
 
           <button
-            onClick={() => router.push("/admin")}
             className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 p-4 rounded-lg hover:bg-blue-200 transition"
           >
             <BarChart3 size={18} />
