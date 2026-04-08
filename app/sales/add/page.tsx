@@ -3,52 +3,57 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
+import toast from "react-hot-toast"; // ✅ ADD
 
 export default function AddSales() {
   const router = useRouter();
 
-  // 🖥️ Computer services
   const [typing, setTyping] = useState(0);
   const [printing, setPrinting] = useState(0);
   const [browsing, setBrowsing] = useState(0);
 
-  // 💳 POS
   const [posCharges, setPosCharges] = useState(0);
 
-  // 🥤 Drinks
   const [coke, setCoke] = useState(0);
   const [water, setWater] = useState(0);
 
-  // 🧮 Calculate total live
   const total =
     typing + printing + browsing + posCharges + coke + water;
 
   const save = async () => {
-    await fetch("/api/sales", {
-      method: "POST",
-      body: JSON.stringify({
-        computer: { typing, printing, browsing, other: 0 },
-        pos: { charges: posCharges },
-        drinks: { coke, water, other: 0 },
-        date: new Date().toISOString(),
-      }),
-    });
+    const loadingToast = toast.loading("Saving sales..."); // ⏳
 
-    alert("Sales recorded ✅");
-    router.push("/sales");
+    try {
+      const res = await fetch("/api/sales", {
+        method: "POST",
+        body: JSON.stringify({
+          computer: { typing, printing, browsing, other: 0 },
+          pos: { charges: posCharges },
+          drinks: { coke, water, other: 0 },
+          date: new Date().toISOString(),
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      toast.success("Sales recorded ✅", { id: loadingToast }); // ✅ replaces loading
+
+      setTimeout(() => {
+        router.push("/sales");
+      }, 500);
+    } catch (err) {
+      toast.error("Failed to save sales ❌", { id: loadingToast }); // ❌ replaces loading
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 p-5">
-      {/* 🔝 Header */}
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
         Record Sales
       </h1>
 
-      {/* 🧾 FORM */}
       <div className="grid md:grid-cols-3 gap-5">
         
-        {/* 🖥️ Computer Services */}
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="font-semibold mb-3 text-gray-700">
             🖥️ Computer Services
@@ -59,7 +64,6 @@ export default function AddSales() {
           <Input label="Browsing" value={browsing} setValue={setBrowsing} />
         </div>
 
-        {/* 💳 POS */}
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="font-semibold mb-3 text-gray-700">
             💳 POS
@@ -68,7 +72,6 @@ export default function AddSales() {
           <Input label="POS Charges" value={posCharges} setValue={setPosCharges} />
         </div>
 
-        {/* 🥤 Drinks */}
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="font-semibold mb-3 text-gray-700">
             🥤 Drinks
@@ -79,7 +82,6 @@ export default function AddSales() {
         </div>
       </div>
 
-      {/* 💰 TOTAL + ACTION */}
       <div className="mt-6 bg-white p-5 rounded-xl shadow flex flex-col md:flex-row justify-between items-center">
         <h2 className="text-xl font-bold text-green-600">
           Total: ₦{total}
@@ -97,7 +99,6 @@ export default function AddSales() {
   );
 }
 
-/* 🔹 Reusable Input Component */
 function Input({
   label,
   value,
