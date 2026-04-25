@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/mongodb";
 import Expense from "@/models/Expense";
+import "@/models/User";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 
