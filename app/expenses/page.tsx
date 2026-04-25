@@ -1,0 +1,199 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
+
+type Expense = {
+  _id: string;
+  fuel: number;
+  internet: number;
+  other: number;
+  total: number;
+  createdAt?: string;
+  recordedBy?: {
+    role?: string;
+    email?: string;
+  };
+};
+
+type ExpenseForm = {
+  fuel: string;
+  internet: string;
+  other: string;
+};
+
+export default function ExpensesPage() {
+  const router = useRouter();
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+
+  const [form, setForm] = useState<ExpenseForm>({
+    fuel: "",
+    internet: "",
+    other: "",
+  });
+
+  const fields: (keyof ExpenseForm)[] = ["fuel", "internet", "other"];
+
+  // ✅ SAFE FETCH
+  const safeFetchJSON = async (url: string, options?: RequestInit) => {
+    try {
+      const res = await fetch(url, options);
+
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+
+      if (!res.ok) {
+        throw new Error(data?.error || "Request failed");
+      }
+
+      return data;
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Unknown error");
+    }
+  };
+
+  // ✅ LOAD EXPENSES
+  const loadExpenses = async () => {
+    try {
+      const data = await safeFetchJSON("/api/expenses");
+      setExpenses(data || []);
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to load expenses"
+      );
+    }
+  };
+
+  useEffect(() => {
+    loadExpenses();
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  // ✅ SUBMIT WITH TOAST
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const loading = toast.loading("Saving expense...");
+
+    try {
+      await safeFetchJSON("/api/expenses", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fuel: Number(form.fuel) || 0,
+          internet: Number(form.internet) || 0,
+          other: Number(form.other) || 0,
+        }),
+      });
+
+      toast.success("Expense saved successfully!", { id: loading });
+
+      setForm({ fuel: "", internet: "", other: "" });
+
+      await loadExpenses();
+    } catch (err: unknown) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to save expense",
+        {
+          id: loading,
+        }
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-3 sm:p-5">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={() => router.back()}
+          className="p-2 bg-white rounded-lg shadow"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <h1 className="text-lg sm:text-2xl font-bold">Expenses</h1>
+      </div>
+
+      {/* Form */}
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-4 sm:p-5 rounded-xl shadow mb-6 space-y-4"
+      >
+        <h2 className="text-base sm:text-lg font-semibold">Add Expense</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {fields.map((field) => (
+            <input
+              key={field}
+              type="number"
+              name={field}
+              value={form[field]}
+              onChange={handleChange}
+              placeholder={field}
+              className="border p-3 rounded-lg text-sm w-full"
+            />
+          ))}
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600"
+        >
+          Save Expense
+        </button>
+      </form>
+
+      {/* Expense List */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">
+          Expense History
+        </h2>
+
+        {expenses.length === 0 ? (
+          <p className="text-gray-400 text-sm">No expenses yet...</p>
+        ) : (
+          <div className="space-y-3">
+            {expenses.map((exp) => (
+              <div
+                key={exp._id}
+                className="border p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between gap-2"
+              >
+                <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                  <p>Fuel: ₦{exp.fuel}</p>
+                  <p>Internet: ₦{exp.internet}</p>
+                  <p>Other: ₦{exp.other}</p>
+
+                  <p className="text-gray-500 mt-2">
+                    By: {exp.recordedBy?.role || "Unknown"} (
+                    {exp.recordedBy?.email || "no-email"})
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="font-bold text-sm sm:text-base text-red-600">
+                    ₦{exp.total}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {exp.createdAt
+                      ? new Date(exp.createdAt).toDateString()
+                      : ""}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -60,8 +60,20 @@ export default function Admin() {
       ]);
       const salesData = salesRes.ok ? await salesRes.json() : [];
       const expensesData = expensesRes.ok ? await expensesRes.json() : [];
+
+      const formattedExpenses = Array.isArray(expensesData)
+        ? expensesData
+            .map(
+              (e: Partial<Expense> & { createdAt?: string }) => ({
+                ...e,
+                date: e.date || e.createdAt || "",
+              })
+            )
+            .filter((e): e is Expense => !!e._id)
+        : [];
+
       setSales(Array.isArray(salesData) ? salesData : []);
-      setExpenses(Array.isArray(expensesData) ? expensesData : []);
+      setExpenses(formattedExpenses);
     } catch {
       setSales([]);
       setExpenses([]);
@@ -187,6 +199,12 @@ export default function Admin() {
           className="w-full text-left bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
         >
           Add Staff
+        </button>
+        <button
+          onClick={() => (window.location.href = "/expenses")}
+          className="w-full text-left bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        >
+          Add Expense
         </button>
         <button
           onClick={handleFetchUsers}

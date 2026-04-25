@@ -1,29 +1,58 @@
 import { NextResponse, NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
+
+type User = {
+  role: "admin" | "sales";
+};
 
 export function middleware(req: NextRequest) {
-  const token = req.cookies.get("token")?.value ?? null;
+  const token = req.cookies.get("token")?.value;
   const { pathname } = req.nextUrl;
 
-  console.log("TOKEN:", token);
-  console.log("PATH:", pathname);
+  let user: User | null = null;
 
-  // Public route
+  // Decode token safely
+  if (token) {
+    try {
+      user = jwt.decode(token) as User;
+    } catch (err) {
+      user = null;
+    }
+  }
+
+  const role = user?.role;
+
+  // Redirect logged-in users away from login page
   if (pathname === "/login") {
-    // If user has token, assume logged in → redirect
     if (token) {
-      return NextResponse.redirect(new URL("/admin", req.url)); // or "/sales"
+      if (role === "admin") {
+        return NextResponse.redirect(new URL("/admin", req.url));
+      }
+      if (role === "sales") {
+        return NextResponse.redirect(new URL("/sales", req.url));
+      }
     }
     return NextResponse.next();
   }
 
-  // Protect /admin
-  if (pathname.startsWith("/admin") && !token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // Protect admin routes
+  if (pathname.startsWith("/admin")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (role !== "admin") {
+      return NextResponse.redirect(new URL("/sales", req.url)); // or /unauthorized
+    }
   }
 
-  // Protect /sales
-  if (pathname.startsWith("/sales") && !token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // Protect sales routes
+  if (pathname.startsWith("/sales")) {
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+    if (role !== "sales") {
+      return NextResponse.redirect(new URL("/admin", req.url)); // or /unauthorized
+    }
   }
 
   return NextResponse.next();

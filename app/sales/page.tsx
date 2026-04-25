@@ -2,7 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PlusCircle, BarChart3, ShoppingCart, LogOut } from "lucide-react";
+import {
+  PlusCircle,
+  BarChart3,
+  ShoppingCart,
+  LogOut,
+  Wallet,
+} from "lucide-react";
 
 type Sale = {
   _id: string;
@@ -14,6 +20,9 @@ type Sale = {
 export default function Sales() {
   const router = useRouter();
   const [sales, setSales] = useState<Sale[]>([]);
+  const [filter, setFilter] = useState<
+    "today" | "week" | "month" | "all"
+  >("today");
 
   useEffect(() => {
     fetch("/api/sales")
@@ -21,125 +30,187 @@ export default function Sales() {
       .then((data) => setSales(data));
   }, []);
 
-  const today = new Date().toDateString();
-  const todaySales = sales.filter(
-    (s) => new Date(s.date).toDateString() === today
-  );
-  const totalToday = todaySales.reduce((acc, s) => acc + (s.totalSales || 0), 0);
-  const totalTransactions = todaySales.length;
+  // ✅ FILTER FUNCTION
+  const filterSales = (data: Sale[]) => {
+    const now = new Date();
 
-  // ✅ Logout handler
+    return data.filter((s) => {
+      const date = new Date(s.date);
+
+      if (filter === "today") {
+        return date.toDateString() === now.toDateString();
+      }
+
+      if (filter === "week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        return date >= weekAgo;
+      }
+
+      if (filter === "month") {
+        return (
+          date.getMonth() === now.getMonth() &&
+          date.getFullYear() === now.getFullYear()
+        );
+      }
+
+      return true;
+    });
+  };
+
+  // ✅ APPLY FILTER
+  const filteredSales = filterSales(sales);
+
+  // ✅ FIXED STATS (NOW USE FILTERED DATA)
+  const totalToday = filteredSales.reduce(
+    (acc, s) => acc + (s.totalSales || 0),
+    0
+  );
+
+  const totalTransactions = filteredSales.length;
+
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-5">
+    <div className="min-h-screen bg-gray-100 p-3 sm:p-5">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Sales Dashboard</h1>
-          <p className="text-gray-500 text-sm">Welcome back 👋, manage your daily sales</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+            Sales Dashboard
+          </h1>
+          <p className="text-gray-500 text-xs sm:text-sm">
+            Welcome back 👋, manage your daily sales
+          </p>
         </div>
 
-        <div className="flex gap-3">
+        {/* ✅ FILTER (UI NOT CHANGED) */}
+        <select
+          value={filter}
+          onChange={(e) =>
+            setFilter(e.target.value as "today" | "week" | "month" | "all")
+          }
+          className="border p-2 rounded-lg"
+        >
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="all">All</option>
+        </select>
+
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+            className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition w-full sm:w-auto"
           >
-            <LogOut size={18} />
+            <LogOut size={16} />
             Logout
           </button>
 
           <button
             onClick={() => router.push("/sales/add")}
-            className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition"
+            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition w-full sm:w-auto"
           >
-            <PlusCircle size={18} />
+            <PlusCircle size={16} />
             Add Sales
+          </button>
+
+          <button
+            onClick={() => router.push("/expenses")}
+            className="flex items-center justify-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition w-full sm:w-auto"
+          >
+            <Wallet size={16} />
+            Expenses
           </button>
         </div>
       </div>
-      {/* 📊 Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500 text-sm">Today Sales</p>
-          <h2 className="text-xl font-bold text-green-600">
+          <p className="text-gray-500 text-xs sm:text-sm">Today Sales</p>
+          <h2 className="text-lg sm:text-xl font-bold text-green-600">
             ₦{totalToday}
           </h2>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500 text-sm">Transactions</p>
-          <h2 className="text-xl font-bold text-blue-600">
+          <p className="text-gray-500 text-xs sm:text-sm">Transactions</p>
+          <h2 className="text-lg sm:text-xl font-bold text-blue-600">
             {totalTransactions}
           </h2>
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow">
-          <p className="text-gray-500 text-sm">Total Records</p>
-          <h2 className="text-xl font-bold text-purple-600">
-            {sales.length}
+          <p className="text-gray-500 text-xs sm:text-sm">Total Records</p>
+          <h2 className="text-lg sm:text-xl font-bold text-purple-600">
+            {filteredSales.length}
           </h2>
         </div>
       </div>
 
-      {/* ⚡ Quick Actions */}
-      <div className="bg-white p-5 rounded-xl shadow mb-6">
-        <h2 className="text-lg font-semibold mb-4 text-gray-700">
+      {/* Quick Actions */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl shadow mb-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">
           Quick Actions
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => router.push("/sales/add")}
-            className="flex items-center justify-center gap-2 bg-green-100 text-green-700 p-4 rounded-lg hover:bg-green-200 transition"
+            className="flex items-center justify-center gap-2 bg-green-100 text-green-700 p-3 sm:p-4 rounded-lg hover:bg-green-200 transition text-sm sm:text-base"
           >
-            <ShoppingCart size={18} />
+            <ShoppingCart size={16} />
             Record Sale
           </button>
 
-          <button
-            className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 p-4 rounded-lg hover:bg-blue-200 transition"
-          >
-            <BarChart3 size={18} />
+          <button className="flex items-center justify-center gap-2 bg-blue-100 text-blue-700 p-3 sm:p-4 rounded-lg hover:bg-blue-200 transition text-sm sm:text-base">
+            <BarChart3 size={16} />
             View Reports
           </button>
 
-          <button className="bg-gray-100 p-4 rounded-lg text-gray-600">
+          <button
+            onClick={() => router.push("/expenses")}
+            className="flex items-center justify-center gap-2 bg-yellow-100 text-yellow-700 p-3 sm:p-4 rounded-lg hover:bg-yellow-200 transition text-sm sm:text-base"
+          >
+            <Wallet size={16} />
+            Manage Expenses
+          </button>
+
+          <button className="bg-gray-100 p-3 sm:p-4 rounded-lg text-gray-600 text-sm sm:text-base">
             📦 Inventory (Coming Soon)
           </button>
         </div>
       </div>
 
-      {/* 📜 Recent Sales */}
-      <div className="bg-white p-5 rounded-xl shadow">
-        <h2 className="text-lg font-semibold mb-4 text-gray-700">
+      {/* Recent Sales */}
+      <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
+        <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">
           Recent Sales
         </h2>
 
-        {sales.length === 0 ? (
-          <p className="text-gray-400 text-sm">
-            No sales recorded yet...
-          </p>
+        {filteredSales.length === 0 ? (
+          <p className="text-gray-400 text-sm">No sales recorded yet...</p>
         ) : (
           <div className="space-y-3">
-            {sales.slice(0, 5).map((s: Sale) => (
+            {filteredSales.slice(0, 5).map((s: Sale) => (
               <div
                 key={s._id}
-                className="flex justify-between items-center border p-3 rounded-lg"
+                className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border p-3 rounded-lg"
               >
                 <div>
-                  <p className="font-semibold text-gray-800">
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">
                     ₦{s.totalSales}
                   </p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-xs sm:text-sm text-gray-500">
                     {new Date(s.date).toDateString()}
                   </p>
                 </div>
 
-                <div className="text-sm text-gray-600">
+                <div className="text-xs sm:text-sm text-gray-600 break-all">
                   {s.recordedBy?.email || "Unknown"}
                 </div>
               </div>
