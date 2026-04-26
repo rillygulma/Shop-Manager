@@ -25,7 +25,7 @@ function isAuthUser(payload: unknown): payload is AuthUser {
 export async function signToken(payload: Record<string, unknown>) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("7d")
+    .setExpirationTime("1d")
     .setIssuedAt()
     .sign(secret);
 }
