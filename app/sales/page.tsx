@@ -89,14 +89,6 @@ export default function Sales() {
 
         <div className="flex flex-col gap-4 mt-10">
           <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-
-          <button
             onClick={() => router.push("/sales/add")}
             className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
           >
@@ -109,7 +101,15 @@ export default function Sales() {
             className="flex items-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition"
           >
             <Wallet size={16} />
-            Expenses
+            Add Expenses
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            <LogOut size={16} />
+            Logout
           </button>
         </div>
       </div>
