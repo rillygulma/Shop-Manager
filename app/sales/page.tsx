@@ -124,33 +124,6 @@ export default function Sales() {
           ☰ Menu
         </button>
 
-        {/* ✅ MOBILE TOP ACTIONS */}
-        <div className="hidden sm:flex flex-col gap-2 mb-4">
-          <button
-            onClick={handleLogout}
-            className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
-
-          <button
-            onClick={() => router.push("/sales/add")}
-            className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg"
-          >
-            <PlusCircle size={16} />
-            Add Sales
-          </button>
-
-          <button
-            onClick={() => router.push("/expenses")}
-            className="flex items-center justify-center gap-2 bg-yellow-500 text-white px-4 py-2 rounded-lg"
-          >
-            <Wallet size={16} />
-            Expenses
-          </button>
-        </div>
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div>
