@@ -86,7 +86,10 @@ export default function Sales() {
         >
           ✖ Close
         </button>
-
+        <h1 className="mt-3 text-2xl font-bold">
+          <span className="text-green-600">Sales</span>{" "}
+          <span className="text-gray-800">Dashboard</span>
+        </h1>
         <div className="flex flex-col gap-4 mt-10">
           <button
             onClick={() => router.push("/sales/add")}
@@ -127,8 +130,9 @@ export default function Sales() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
-              Sales Dashboard
+            <h1 className="mt-3 text-2xl font-bold">
+              <span className="text-green-600">Sales</span>{" "}
+              <span className="text-gray-800">Dashboard</span>
             </h1>
             <p className="text-gray-500 text-xs sm:text-sm">
               Welcome back 👋, manage your daily sales

@@ -63,12 +63,10 @@ export default function Admin() {
 
       const formattedExpenses = Array.isArray(expensesData)
         ? expensesData
-            .map(
-              (e: Partial<Expense> & { createdAt?: string }) => ({
-                ...e,
-                date: e.date || e.createdAt || "",
-              })
-            )
+            .map((e: Partial<Expense> & { createdAt?: string }) => ({
+              ...e,
+              date: e.date || e.createdAt || "",
+            }))
             .filter((e): e is Expense => !!e._id)
         : [];
 
@@ -190,35 +188,55 @@ export default function Admin() {
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      <div
-        className={`fixed md:static z-40 top-0 left-0 h-full w-64 bg-white shadow-md p-5 flex flex-col gap-4 transform transition-transform ${sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
-      >
-        <h1 className="text-xl font-bold text-gray-800 mb-6">Dashboard</h1>
-        <button
-          onClick={() => setShowModal(true)}
-          className="w-full text-left bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          Add Staff
-        </button>
-        <button
-          onClick={() => (window.location.href = "/expenses")}
-          className="w-full text-left bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-        >
-          Add Expense
-        </button>
-        <button
-          onClick={handleFetchUsers}
-          className="w-full text-left bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-        >
-          Manage Users
-        </button>
-        <button
-          onClick={handleLogout}
-          className="w-full text-left bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-        >
-          Logout
-        </button>
-      </div>
+      {/* Sidebar */}
+<div
+  className={`fixed md:static z-40 top-0 left-0 h-full w-64 bg-white shadow-md p-5 flex flex-col gap-4 transform transition-transform ${
+    sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+  }`}
+>
+  {/* ✅ MOBILE CLOSE BUTTON (ADDED) */}
+  <div className="flex justify-end md:hidden">
+    <button
+      onClick={() => setSidebarOpen(false)}
+      className="p-2 rounded-lg hover:bg-gray-100"
+    >
+      <X size={22} />
+    </button>
+  </div>
+
+  <h1 className="mt-3 text-2xl font-bold">
+    <span className="text-green-600">Admin</span>{" "}
+    <span className="text-gray-800">Dashboard</span>
+  </h1>
+
+  <button
+    onClick={() => setShowModal(true)}
+    className="w-full text-left bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+  >
+    Add Staff
+  </button>
+
+  <button
+    onClick={() => (window.location.href = "/expenses")}
+    className="w-full text-left bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+  >
+    Add Expense
+  </button>
+
+  <button
+    onClick={handleFetchUsers}
+    className="w-full text-left bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+  >
+    Manage Users
+  </button>
+
+  <button
+    onClick={handleLogout}
+    className="w-full text-left bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+  >
+    Logout
+  </button>
+</div>
 
       {/* Overlay */}
       {sidebarOpen && (
@@ -237,9 +255,10 @@ export default function Admin() {
               <Menu />
             </button>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">
-                Admin Dashboard
-              </h2>
+              <h1 className="mt-3 text-2xl font-bold">
+                <span className="text-green-600">Admin</span>{" "}
+                <span className="text-gray-800">Dashboard</span>
+              </h1>
               <p className="text-gray-500 text-sm">
                 Monitor your shop performance 📊
               </p>
