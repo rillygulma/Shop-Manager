@@ -2,6 +2,7 @@ import { connectDB } from "@/lib/mongodb";
 import Sale from "@/models/Sale";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
+import "@/models/User";
 
 export async function POST(req: Request) {
   await connectDB();

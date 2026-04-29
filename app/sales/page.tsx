@@ -25,12 +25,17 @@ export default function Sales() {
   );
   const [openSidebar, setOpenSidebar] = useState(false);
 
+  // ✅ Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   useEffect(() => {
     fetch("/api/sales")
       .then((res) => res.json())
       .then((data) => setSales(data));
   }, []);
 
+  // ✅ Reset page when filter changes
   const filterSales = (data: Sale[]) => {
     const now = new Date();
 
@@ -60,6 +65,14 @@ export default function Sales() {
 
   const filteredSales = filterSales(sales);
 
+  // ✅ Pagination logic
+  const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
+
+  const paginatedSales = filteredSales.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   const totalToday = filteredSales.reduce(
     (acc, s) => acc + (s.totalSales || 0),
     0,
@@ -79,17 +92,18 @@ export default function Sales() {
         className={`fixed top-0 left-0 h-full w-60 bg-white shadow p-4 gap-4 transform transition-transform z-50
   ${openSidebar ? "translate-x-0" : "-translate-x-full"} sm:translate-x-0 sm:static sm:flex flex-col`}
       >
-        {/* CLOSE BUTTON (MOBILE ONLY) */}
         <button
           onClick={() => setOpenSidebar(false)}
           className="sm:hidden mb-4 text-gray-600"
         >
           ✖ Close
         </button>
+
         <h1 className="mt-3 text-2xl font-bold">
           <span className="text-green-600">Sales</span>{" "}
           <span className="text-gray-800">Dashboard</span>
         </h1>
+
         <div className="flex flex-col gap-4 mt-10">
           <button
             onClick={() => router.push("/sales/add")}
@@ -117,9 +131,8 @@ export default function Sales() {
         </div>
       </div>
 
-      {/* ✅ MAIN CONTENT */}
+      {/* ✅ MAIN */}
       <div className="flex-1 p-3 sm:p-5">
-        {/* ✅ MOBILE MENU BUTTON */}
         <button
           onClick={() => setOpenSidebar(true)}
           className="sm:hidden mb-4 bg-gray-800 text-white px-3 py-2 rounded-lg"
@@ -176,7 +189,6 @@ export default function Sales() {
             </h2>
           </div>
         </div>
-
         {/* Quick Actions */}
         <div className="bg-white p-4 sm:p-5 rounded-xl shadow mb-6">
           <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">
@@ -210,7 +222,6 @@ export default function Sales() {
             </button>
           </div>
         </div>
-
         {/* Recent Sales */}
         <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
           <h2 className="text-base sm:text-lg font-semibold mb-4 text-gray-700">
@@ -220,27 +231,56 @@ export default function Sales() {
           {filteredSales.length === 0 ? (
             <p className="text-gray-400 text-sm">No sales recorded yet...</p>
           ) : (
-            <div className="space-y-3">
-              {filteredSales.slice(0, 5).map((s: Sale) => (
-                <div
-                  key={s._id}
-                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border p-3 rounded-lg"
-                >
-                  <div>
-                    <p className="font-semibold text-gray-800 text-sm sm:text-base">
-                      ₦{s.totalSales}
-                    </p>
-                    <p className="text-xs sm:text-sm text-gray-500">
-                      {new Date(s.date).toDateString()}
-                    </p>
-                  </div>
+            <>
+              <div className="space-y-3">
+                {paginatedSales.map((s: Sale) => (
+                  <div
+                    key={s._id}
+                    className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 border p-3 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                        ₦{s.totalSales}
+                      </p>
+                      <p className="text-xs sm:text-sm text-gray-500">
+                        {new Date(s.date).toDateString()}
+                      </p>
+                    </div>
 
-                  <div className="text-xs sm:text-sm text-gray-600 break-all">
-                    {s.recordedBy?.email || "Unknown"}
+                    <div className="text-xs sm:text-sm text-gray-600 break-all">
+                      {s.recordedBy?.email || "Unknown"}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+
+              {/* ✅ Pagination Controls */}
+              <div className="flex justify-between items-center mt-4">
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                >
+                  Prev
+                </button>
+
+                <span className="text-sm text-gray-600">
+                  Page {currentPage} of {totalPages || 1}
+                </span>
+
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 bg-green-600 text-white rounded disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </>
           )}
         </div>
       </div>
