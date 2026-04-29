@@ -28,6 +28,10 @@ export default function ExpensesPage() {
   const router = useRouter();
   const [expenses, setExpenses] = useState<Expense[]>([]);
 
+  // ✅ Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   const [form, setForm] = useState<ExpenseForm>({
     fuel: "",
     internet: "",
@@ -73,9 +77,22 @@ export default function ExpensesPage() {
     loadExpenses();
   }, []);
 
+  // reset page on reload
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [expenses.length]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  // pagination logic
+  const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
+
+  const paginatedExpenses = expenses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // ✅ SUBMIT WITH TOAST
   const handleSubmit = async (e: React.FormEvent) => {
@@ -104,9 +121,7 @@ export default function ExpensesPage() {
     } catch (err: unknown) {
       toast.error(
         err instanceof Error ? err.message : "Failed to save expense",
-        {
-          id: loading,
-        }
+        { id: loading }
       );
     }
   };
@@ -162,36 +177,67 @@ export default function ExpensesPage() {
         {expenses.length === 0 ? (
           <p className="text-gray-400 text-sm">No expenses yet...</p>
         ) : (
-          <div className="space-y-3">
-            {expenses.map((exp) => (
-              <div
-                key={exp._id}
-                className="border p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between gap-2"
+          <>
+            <div className="space-y-3">
+              {paginatedExpenses.map((exp) => (
+                <div
+                  key={exp._id}
+                  className="border p-3 rounded-lg flex flex-col sm:flex-row sm:justify-between gap-2"
+                >
+                  <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                    <p>Fuel: ₦{exp.fuel}</p>
+                    <p>Internet: ₦{exp.internet}</p>
+                    <p>Other: ₦{exp.other}</p>
+
+                    <p className="text-gray-500 mt-2">
+                      By: {exp.recordedBy?.role || "Unknown"} (
+                      {exp.recordedBy?.email || "no-email"})
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold text-sm sm:text-base text-red-600">
+                      ₦{exp.total}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {exp.createdAt
+                        ? new Date(exp.createdAt).toDateString()
+                        : ""}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-between items-center mt-4">
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.max(prev - 1, 1))
+                }
+                disabled={currentPage === 1}
+                className="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
               >
-                <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                  <p>Fuel: ₦{exp.fuel}</p>
-                  <p>Internet: ₦{exp.internet}</p>
-                  <p>Other: ₦{exp.other}</p>
+                Prev
+              </button>
 
-                  <p className="text-gray-500 mt-2">
-                    By: {exp.recordedBy?.role || "Unknown"} (
-                    {exp.recordedBy?.email || "no-email"})
-                  </p>
-                </div>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages || 1}
+              </span>
 
-                <div className="text-right">
-                  <p className="font-bold text-sm sm:text-base text-red-600">
-                    ₦{exp.total}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {exp.createdAt
-                      ? new Date(exp.createdAt).toDateString()
-                      : ""}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) =>
+                    Math.min(prev + 1, totalPages)
+                  )
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
