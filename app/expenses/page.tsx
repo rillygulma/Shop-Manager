@@ -32,6 +32,9 @@ export default function ExpensesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
+  // ✅ Search
+  const [search, setSearch] = useState("");
+
   const [form, setForm] = useState<ExpenseForm>({
     fuel: "",
     internet: "",
@@ -86,10 +89,24 @@ export default function ExpensesPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // pagination logic
-  const totalPages = Math.ceil(expenses.length / ITEMS_PER_PAGE);
+  // ✅ FILTER (SEARCH)
+  const filteredExpenses = expenses.filter((exp) => {
+    const term = search.toLowerCase();
 
-  const paginatedExpenses = expenses.slice(
+    return (
+      exp.recordedBy?.email?.toLowerCase().includes(term) ||
+      exp.recordedBy?.role?.toLowerCase().includes(term) ||
+      exp.fuel.toString().includes(term) ||
+      exp.internet.toString().includes(term) ||
+      exp.other.toString().includes(term) ||
+      exp.total.toString().includes(term)
+    );
+  });
+
+  // pagination logic (UPDATED)
+  const totalPages = Math.ceil(filteredExpenses.length / ITEMS_PER_PAGE);
+
+  const paginatedExpenses = filteredExpenses.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -170,6 +187,18 @@ export default function ExpensesPage() {
 
       {/* Expense List */}
       <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
+        {/* ✅ SEARCH INPUT */}
+        <input
+          type="text"
+          placeholder="Search expenses..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="border p-2 rounded-lg w-full mb-4 text-sm"
+        />
+
         <h2 className="text-base sm:text-lg font-semibold mb-4">
           Expense History
         </h2>
