@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import toast from "react-hot-toast"; // ✅ ADD
 
 export default function AddSales() {
@@ -17,8 +17,7 @@ export default function AddSales() {
   const [coke, setCoke] = useState(0);
   const [water, setWater] = useState(0);
 
-  const total =
-    typing + printing + browsing + posCharges + coke + water;
+  const total = typing + printing + browsing + posCharges + coke + water;
 
   const save = async () => {
     const loadingToast = toast.loading("Saving sales..."); // ⏳
@@ -48,12 +47,17 @@ export default function AddSales() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-5">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+        <button
+          onClick={() => router.back()}
+          className="p-2 bg-white rounded-lg shadow"
+        >
+          <ArrowLeft size={18} />
+        </button>
         Record Sales
       </h1>
 
       <div className="grid md:grid-cols-3 gap-5">
-        
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="font-semibold mb-3 text-gray-700">
             🖥️ Computer Services
@@ -65,17 +69,17 @@ export default function AddSales() {
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="font-semibold mb-3 text-gray-700">
-            💳 POS
-          </h2>
+          <h2 className="font-semibold mb-3 text-gray-700">💳 POS</h2>
 
-          <Input label="POS Charges" value={posCharges} setValue={setPosCharges} />
+          <Input
+            label="POS Charges"
+            value={posCharges}
+            setValue={setPosCharges}
+          />
         </div>
 
         <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="font-semibold mb-3 text-gray-700">
-            🥤 Drinks
-          </h2>
+          <h2 className="font-semibold mb-3 text-gray-700">🥤 Drinks</h2>
 
           <Input label="Coke" value={coke} setValue={setCoke} />
           <Input label="Water" value={water} setValue={setWater} />
@@ -83,9 +87,7 @@ export default function AddSales() {
       </div>
 
       <div className="mt-6 bg-white p-5 rounded-xl shadow flex flex-col md:flex-row justify-between items-center">
-        <h2 className="text-xl font-bold text-green-600">
-          Total: ₦{total}
-        </h2>
+        <h2 className="text-xl font-bold text-green-600">Total: ₦{total}</h2>
 
         <button
           onClick={save}

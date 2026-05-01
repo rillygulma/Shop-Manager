@@ -215,7 +215,6 @@ export default function Admin() {
   >
     Add Staff
   </button>
-
   <button
     onClick={() => (window.location.href = "/expenses")}
     className="w-full text-left bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
