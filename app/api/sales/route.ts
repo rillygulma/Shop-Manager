@@ -10,8 +10,7 @@ export async function POST(req: Request) {
   const body = await req.json();
 
   const token = cookies().get("token")?.value;
-
-  const user = await verifyToken(token!); // ✅ FIXED (added await)
+  const user = await verifyToken(token!);
 
   if (!user || typeof user === "string") {
     return Response.json({ error: "Invalid token" }, { status: 401 });
@@ -26,18 +25,43 @@ export async function POST(req: Request) {
   const sale = await Sale.create({
     ...body,
     totalSales,
-    recordedBy: user.userId, // ✅ now works
+    recordedBy: user.userId,
   });
 
   return Response.json(sale);
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   await connectDB();
 
-  const sales = await Sale.find()
-    .populate("recordedBy", "email")
-    .sort({ createdAt: -1 });
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
 
-  return Response.json(sales);
+    // ✅ GET SINGLE SALE
+    if (id) {
+      const sale = await Sale.findById(id).populate(
+        "recordedBy",
+        "email role"
+      );
+
+      if (!sale) {
+        return Response.json({ error: "Sale not found" }, { status: 404 });
+      }
+
+      return Response.json(sale);
+    }
+
+    // ✅ GET ALL SALES
+    const sales = await Sale.find()
+      .populate("recordedBy", "email")
+      .sort({ createdAt: -1 });
+
+    return Response.json(sales);
+  } catch (error) {
+    return Response.json(
+      { error: "Failed to fetch sales" },
+      { status: 500 }
+    );
+  }
 }

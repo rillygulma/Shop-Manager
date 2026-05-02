@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
-import toast from "react-hot-toast"; // ✅ ADD
+import toast from "react-hot-toast";
 
 export default function AddSales() {
   const router = useRouter();

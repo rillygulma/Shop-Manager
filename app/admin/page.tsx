@@ -10,6 +10,10 @@ import {
   Edit2,
   Trash2,
   Menu,
+  UserPlus,
+  CalendarPlus,
+  UserCog,
+  LogOut,
 } from "lucide-react";
 
 interface Sale {
@@ -17,6 +21,20 @@ interface Sale {
   totalSales: number;
   date: string;
   recordedBy?: { email: string };
+  computer?: {
+    typing?: number;
+    printing?: number;
+    browsing?: number;
+  };
+
+  pos?: {
+    charges?: number;
+  };
+
+  drinks?: {
+    coke?: number;
+    water?: number;
+  };
 }
 interface Expense {
   _id: string;
@@ -44,7 +62,7 @@ export default function Admin() {
   const [users, setUsers] = useState<User[]>([]);
   const [showUsers, setShowUsers] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -185,57 +203,67 @@ export default function Admin() {
     setShowModal(true);
   };
 
+  const fetchSingleSale = async (id: string) => {
+    const res = await fetch(`/api/sales?id=${id}`);
+    const data = await res.json();
+    setSelectedSale(data);
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       {/* Sidebar */}
-      {/* Sidebar */}
-<div
-  className={`fixed md:static z-40 top-0 left-0 h-full w-64 bg-white shadow-md p-5 flex flex-col gap-4 transform transition-transform ${
-    sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-  }`}
->
-  {/* ✅ MOBILE CLOSE BUTTON (ADDED) */}
-  <div className="flex justify-end md:hidden">
-    <button
-      onClick={() => setSidebarOpen(false)}
-      className="p-2 rounded-lg hover:bg-gray-100"
-    >
-      <X size={22} />
-    </button>
-  </div>
+      <div
+        className={`fixed md:static z-40 top-0 left-0 h-full w-64 bg-white shadow-md p-5 flex flex-col gap-4 transform transition-transform ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        {/* ✅ MOBILE CLOSE BUTTON (ADDED) */}
+        <div className="flex justify-end md:hidden">
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="p-2 rounded-lg hover:bg-gray-100"
+          >
+            <X size={22} />
+          </button>
+        </div>
 
-  <h1 className="mt-3 text-2xl font-bold">
-    <span className="text-green-600">Admin</span>{" "}
-    <span className="text-gray-800">Dashboard</span>
-  </h1>
+        <h1 className="mt-3 text-2xl font-bold">
+          <span className="text-green-600">Admin</span>{" "}
+          <span className="text-gray-800">Dashboard</span>
+        </h1>
 
-  <button
-    onClick={() => setShowModal(true)}
-    className="w-full text-left bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-  >
-    Add Staff
-  </button>
-  <button
-    onClick={() => (window.location.href = "/expenses")}
-    className="w-full text-left bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
-  >
-    Add Expense
-  </button>
+        <button
+          onClick={() => setShowModal(true)}
+          className="w-full flex items-center gap-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+        >
+          <UserPlus size={22} />
+          <span>Add Staff</span>
+        </button>
 
-  <button
-    onClick={handleFetchUsers}
-    className="w-full text-left bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
-  >
-    Manage Users
-  </button>
+        <button
+          onClick={() => (window.location.href = "/expenses")}
+          className="w-full flex items-center gap-3 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+        >
+          <CalendarPlus size={22} />
+          <span>Add Expense</span>
+        </button>
 
-  <button
-    onClick={handleLogout}
-    className="w-full text-left bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
-  >
-    Logout
-  </button>
-</div>
+        <button
+          onClick={handleFetchUsers}
+          className="w-full flex items-center gap-3 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+        >
+          <UserCog size={22} />
+          <span>Manage Users</span>
+        </button>
+
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+        >
+          <LogOut size={22} />
+          <span>Logout</span>
+        </button>
+      </div>
 
       {/* Overlay */}
       {sidebarOpen && (
@@ -341,7 +369,8 @@ export default function Admin() {
               {filteredSales.map((sale) => (
                 <div
                   key={sale._id}
-                  className="border p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  onClick={() => fetchSingleSale(sale._id)}
+                  className="border p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-gray-50"
                 >
                   <div>
                     <p className="font-medium text-gray-800">
@@ -359,6 +388,73 @@ export default function Admin() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          {selectedSale && (
+            <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4">
+              <div className="bg-white rounded-xl p-6 w-full max-w-md relative">
+                <button
+                  onClick={() => setSelectedSale(null)}
+                  className="absolute top-3 right-3"
+                >
+                  <X />
+                </button>
+
+                <h2 className="text-xl font-bold mb-4">Sale Details</h2>
+
+                <div className="space-y-3 text-sm">
+                  {/* ✅ COMPUTER */}
+                  <p>
+                    <span className="font-semibold">Typing:</span> ₦
+                    {selectedSale.computer?.typing || 0}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Printing:</span> ₦
+                    {selectedSale.computer?.printing || 0}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Browsing:</span> ₦
+                    {selectedSale.computer?.browsing || 0}
+                  </p>
+
+                  {/* ✅ POS */}
+                  <p>
+                    <span className="font-semibold">POS Charges:</span> ₦
+                    {selectedSale.pos?.charges || 0}
+                  </p>
+
+                  {/* ✅ DRINKS */}
+                  <p>
+                    <span className="font-semibold">Coke:</span> ₦
+                    {selectedSale.drinks?.coke || 0}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Water:</span> ₦
+                    {selectedSale.drinks?.water || 0}
+                  </p>
+
+                  {/* ✅ TOTAL */}
+                  <div className="border-t pt-3 mt-3">
+                    <p className="font-bold text-red-600">
+                      Total: ₦{selectedSale.totalSales}
+                    </p>
+                  </div>
+
+                  {/* ✅ META */}
+                  <p>
+                    <span className="font-semibold">Recorded By:</span>{" "}
+                    {selectedSale.recordedBy?.email || "Unknown"}
+                  </p>
+
+                  <p>
+                    <span className="font-semibold">Date:</span>{" "}
+                    {new Date(selectedSale.date).toLocaleString()}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>
