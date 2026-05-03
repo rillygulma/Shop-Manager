@@ -13,14 +13,12 @@ export async function POST(req: Request) {
 
     const token = cookies().get("token")?.value;
 
-    // ✅ HANDLE NO TOKEN
     if (!token) {
       return Response.json({ error: "No token provided" }, { status: 401 });
     }
 
     const user = await verifyToken(token);
 
-    // ✅ HANDLE INVALID TOKEN
     if (!user || typeof user === "string") {
       return Response.json({ error: "Invalid token" }, { status: 401 });
     }
@@ -35,8 +33,6 @@ export async function POST(req: Request) {
       internet: body.internet || 0,
       other: body.other || 0,
       total,
-
-      // ✅ must match ObjectId in schema
       recordedBy: user.userId,
     });
 
@@ -44,7 +40,6 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("POST ERROR:", error);
 
-    // ✅ ALWAYS RETURN JSON
     return Response.json(
       { error: "Failed to create expense" },
       { status: 500 }
@@ -52,34 +47,52 @@ export async function POST(req: Request) {
   }
 }
 
-// ✅ GET
-export async function GET() {
-  try {
-    await connectDB();
+// ✅ GET (MATCHES YOUR SALES LOGIC)
+export async function GET(req: Request) {
+  await connectDB();
 
+  try {
     const token = cookies().get("token")?.value;
 
-    // ❌ No token
     if (!token) {
       return Response.json({ error: "No token provided" }, { status: 401 });
     }
 
     const user = await verifyToken(token);
 
-    // ❌ Invalid token
+    // ✅ handle expired or invalid token
     if (!user || typeof user === "string") {
-      return Response.json({ error: "Invalid token" }, { status: 401 });
+      return Response.json({ error: "Invalid or expired token" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    // ✅ GET SINGLE EXPENSE (LIKE SALES)
+    if (id) {
+      const expense = await Expense.findById(id).populate(
+        "recordedBy",
+        "email role"
+      );
+
+      if (!expense) {
+        return Response.json(
+          { error: "Expense not found" },
+          { status: 404 }
+        );
+      }
+
+      return Response.json(expense);
+    }
+
+    // ✅ GET ALL EXPENSES
     let expenses;
 
-    // ✅ ADMIN → get all
     if (user.role === "admin") {
       expenses = await Expense.find()
         .populate("recordedBy", "email role")
         .sort({ createdAt: -1 });
     } else {
-      // ✅ NORMAL USER → only their expenses
       expenses = await Expense.find({ recordedBy: user.userId })
         .populate("recordedBy", "email role")
         .sort({ createdAt: -1 });
@@ -89,6 +102,9 @@ export async function GET() {
   } catch (error) {
     console.error("GET ERROR:", error);
 
-    return Response.json([], { status: 500 });
+    return Response.json(
+      { error: "Failed to fetch expenses" },
+      { status: 500 }
+    );
   }
 }
