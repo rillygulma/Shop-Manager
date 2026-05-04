@@ -189,7 +189,7 @@ export default function ExpensesPage() {
 
         <button
           type="submit"
-          className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600"
+          className="w-auto mx-auto block bg-yellow-500 text-white px-10 py-3 rounded-lg hover:bg-yellow-600"
         >
           Save Expense
         </button>
