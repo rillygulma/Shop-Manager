@@ -21,22 +21,46 @@ export async function GET(req: Request) {
     }
 
     const { searchParams } = new URL(req.url);
+
     const filter = searchParams.get("filter") || "today";
+    const startDateQuery = searchParams.get("startDate");
+    const endDateQuery = searchParams.get("endDate");
 
     const now = new Date();
-    let startDate = new Date();
-    const endDate = new Date();
+    let startDate: Date;
+    let endDate: Date = new Date();
 
-    if (filter === "today") {
-      startDate.setHours(0, 0, 0, 0);
-    } else if (filter === "week") {
-      startDate.setDate(now.getDate() - 7);
-    } else if (filter === "month") {
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    // ✅ PRIORITY: Custom date range (calendar)
+    if (startDateQuery && endDateQuery) {
+      startDate = new Date(startDateQuery);
+      endDate = new Date(endDateQuery);
+
+      // include full end day
+      endDate.setHours(23, 59, 59, 999);
+
+      // optional validation
+      if (startDate > endDate) {
+        return Response.json(
+          { error: "Invalid date range" },
+          { status: 400 }
+        );
+      }
     } else {
-      startDate = new Date(0);
+      // ✅ fallback to filter
+      if (filter === "today") {
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+      } else if (filter === "week") {
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+      } else if (filter === "month") {
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else {
+        startDate = new Date(0); // all time
+      }
     }
 
+    // ✅ Fetch Data
     const sales = await Sale.find({
       createdAt: { $gte: startDate, $lte: endDate },
     }).populate("recordedBy", "email");
@@ -59,10 +83,10 @@ export async function GET(req: Request) {
       daily: {} as Record<string, number>,
     };
 
+    // ✅ Process Sales
     sales.forEach((s) => {
       report.totalSales += s.totalSales || 0;
 
-      // category breakdown
       report.computer.typing += s.computer?.typing || 0;
       report.computer.printing += s.computer?.printing || 0;
       report.computer.browsing += s.computer?.browsing || 0;
@@ -81,6 +105,7 @@ export async function GET(req: Request) {
       report.daily[day] = (report.daily[day] || 0) + s.totalSales;
     });
 
+    // ✅ Process Expenses
     expenses.forEach((e) => {
       report.totalExpenses += e.total || 0;
     });
@@ -90,7 +115,7 @@ export async function GET(req: Request) {
 
     const profit = report.totalSales - report.totalExpenses;
 
-    // top category
+    // ✅ Top Category
     const categories = [
       {
         name: "Computer",

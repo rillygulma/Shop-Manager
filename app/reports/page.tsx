@@ -1,6 +1,8 @@
 "use client";
 
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type ReportData = {
   totalSales: number;
@@ -39,16 +41,27 @@ type SectionProps = {
 
 export default function ReportPage() {
   const [data, setData] = useState<ReportData | null>(null);
-  const [filter, setFilter] = useState<"today" | "week" | "month" | "all">("today");
+  const [filter, setFilter] = useState<"today" | "week" | "month" | "all">(
+    "today",
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const router = useRouter();
 
   const fetchReport = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`/api/reports?filter=${filter}`);
+      let url = `/api/reports?filter=${filter}`;
+
+      if (startDate && endDate) {
+        url = `/api/reports?startDate=${startDate}&endDate=${endDate}`;
+      }
+
+      const res = await fetch(url);
 
       if (!res.ok) {
         throw new Error("Failed to fetch report");
@@ -74,19 +87,62 @@ export default function ReportPage() {
   return (
     <div className="p-5 space-y-6 bg-gray-100 min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+              <button
+          onClick={() => router.back()}
+          className="p-2 bg-white rounded-lg shadow"
+        >
+          <ArrowLeft size={18} />
+        </button>
         <h1 className="text-2xl font-bold">Sales Report</h1>
 
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value as typeof filter)}
-          className="border p-2 rounded-lg"
-        >
-          <option value="today">Today</option>
-          <option value="week">Week</option>
-          <option value="month">Month</option>
-          <option value="all">All</option>
-        </select>
+        <div className="flex flex-wrap gap-2 items-center">
+          {/* Default Filter */}
+          <select
+            value={filter}
+            onChange={(e) => {
+              setStartDate("");
+              setEndDate("");
+              setFilter(e.target.value as typeof filter);
+            }}
+            className="border p-2 rounded-lg"
+          >
+            <option value="today">Today</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+            <option value="all">All</option>
+          </select>
+
+          {/* Start Date */}
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => {
+              setFilter("all");
+              setStartDate(e.target.value);
+            }}
+            className="border p-2 rounded-lg"
+          />
+
+          {/* End Date */}
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => {
+              setFilter("all");
+              setEndDate(e.target.value);
+            }}
+            className="border p-2 rounded-lg"
+          />
+
+          {/* Button to trigger */}
+          <button
+            onClick={fetchReport}
+            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Apply
+          </button>
+        </div>
       </div>
 
       {/* KPI Cards */}
@@ -94,7 +150,11 @@ export default function ReportPage() {
         <Card title="Sales" value={data?.totalSales ?? 0} color="green" />
         <Card title="Expenses" value={data?.totalExpenses ?? 0} color="red" />
         <Card title="Profit" value={data?.profit ?? 0} color="purple" />
-        <Card title="Transactions" value={data?.totalTransactions ?? 0} color="blue" />
+        <Card
+          title="Transactions"
+          value={data?.totalTransactions ?? 0}
+          color="blue"
+        />
       </div>
 
       {/* Top Category */}
