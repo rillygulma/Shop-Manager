@@ -250,12 +250,12 @@ export default function Admin() {
         </button>
 
         <button
-  onClick={() => (window.location.href = "/reports")}
-  className="w-full flex items-center gap-3 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition"
->
-  <FileText size={22} />
-  <span>View Report</span>
-</button>
+          onClick={() => (window.location.href = "/reports")}
+          className="w-full flex items-center gap-3 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition"
+        >
+          <FileText size={22} />
+          <span>View Report</span>
+        </button>
 
         <button
           onClick={handleFetchUsers}

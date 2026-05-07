@@ -88,13 +88,16 @@ export default function ReportPage() {
     <div className="p-5 space-y-6 bg-gray-100 min-h-screen">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-              <button
-          onClick={() => router.back()}
-          className="p-2 bg-white rounded-lg shadow"
-        >
-          <ArrowLeft size={18} />
-        </button>
-        <h1 className="text-2xl font-bold">Sales Report</h1>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="p-2 bg-white rounded-lg shadow"
+          >
+            <ArrowLeft size={18} />
+          </button>
+
+          <h1 className="text-2xl text-amber-600 font-bold">Sales Report</h1>
+        </div>
 
         <div className="flex flex-wrap gap-2 items-center">
           {/* Default Filter */}
