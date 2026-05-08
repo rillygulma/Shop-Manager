@@ -163,7 +163,7 @@ export default function ExpensesPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-lg sm:text-2xl font-bold">Expenses</h1>
+        <h1 className="text-lg text-yellow-500 sm:text-2xl font-bold">Expenses</h1>
       </div>
 
       {/* Form */}
@@ -171,7 +171,7 @@ export default function ExpensesPage() {
         onSubmit={handleSubmit}
         className="bg-white p-4 sm:p-5 rounded-xl shadow mb-6 space-y-4"
       >
-        <h2 className="text-base sm:text-lg font-semibold">Add Expense</h2>
+        <h2 className="text-base text-yellow-500 sm:text-lg font-semibold">Add Expense</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {fields.map((field) => (
@@ -209,7 +209,7 @@ export default function ExpensesPage() {
           className="border p-2 rounded-lg w-full mb-4 text-sm"
         />
 
-        <h2 className="text-base sm:text-lg font-semibold mb-4">
+        <h2 className="text-base text-yellow-500 sm:text-lg font-semibold mb-4">
           Expense History
         </h2>
 
@@ -254,7 +254,7 @@ export default function ExpensesPage() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded disabled:opacity-50"
               >
                 Prev
               </button>
@@ -268,7 +268,7 @@ export default function ExpensesPage() {
                   setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                 }
                 disabled={currentPage === totalPages}
-                className="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50"
+                className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white rounded disabled:opacity-50"
               >
                 Next
               </button>

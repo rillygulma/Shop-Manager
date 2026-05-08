@@ -81,7 +81,7 @@ export default function ReportPage() {
     fetchReport();
   }, [filter]);
 
-  if (loading) return <p className="p-5">Loading...</p>;
+  if (loading) return <p className="p-5">Loading....</p>;
   if (error) return <p className="p-5 text-red-500">{error}</p>;
 
   return (
@@ -141,7 +141,7 @@ export default function ReportPage() {
           {/* Button to trigger */}
           <button
             onClick={fetchReport}
-            className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-amber-600 text-white px-3 py-2 rounded-lg hover:bg-amber-700"
           >
             Apply
           </button>
@@ -162,7 +162,7 @@ export default function ReportPage() {
 
       {/* Top Category */}
       <div className="bg-white p-4 rounded-xl shadow">
-        <h2 className="font-semibold">Top Category</h2>
+        <h2 className="font-semibold text-amber-600">Top Category</h2>
         <p className="text-lg font-bold text-green-600">
           {data?.topCategory?.name || "N/A"} (₦{data?.topCategory?.value ?? 0})
         </p>
@@ -188,7 +188,7 @@ export default function ReportPage() {
 
       {/* Staff Performance */}
       <div className="bg-white p-4 rounded-xl shadow">
-        <h2 className="font-semibold mb-2">Staff Performance</h2>
+        <h2 className="font-semibold text-amber-600 mb-2">Staff Performance</h2>
         {Object.entries(data?.staff || {}).map(([email, value]) => (
           <div key={email} className="flex justify-between text-sm">
             <span>{email}</span>
