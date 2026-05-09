@@ -41,6 +41,7 @@ export default function ExpensesPage() {
     other: "",
   });
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [loadingExpenses, setLoadingExpenses] = useState(true);
 
   const fields: (keyof ExpenseForm)[] = ["fuel", "internet", "other"];
 
@@ -68,12 +69,16 @@ export default function ExpensesPage() {
   // ✅ LOAD EXPENSES
   const loadExpenses = async () => {
     try {
+      setLoadingExpenses(true);
+
       const data = await safeFetchJSON("/api/expenses");
       setExpenses(data || []);
     } catch (err: unknown) {
       toast.error(
         err instanceof Error ? err.message : "Failed to load expenses",
       );
+    } finally {
+      setLoadingExpenses(false);
     }
   };
 
@@ -163,7 +168,9 @@ export default function ExpensesPage() {
         >
           <ArrowLeft size={18} />
         </button>
-        <h1 className="text-lg text-yellow-500 sm:text-2xl font-bold">Expenses</h1>
+        <h1 className="text-lg text-yellow-500 sm:text-2xl font-bold">
+          Expenses
+        </h1>
       </div>
 
       {/* Form */}
@@ -171,7 +178,9 @@ export default function ExpensesPage() {
         onSubmit={handleSubmit}
         className="bg-white p-4 sm:p-5 rounded-xl shadow mb-6 space-y-4"
       >
-        <h2 className="text-base text-yellow-500 sm:text-lg font-semibold">Add Expense</h2>
+        <h2 className="text-base text-yellow-500 sm:text-lg font-semibold">
+          Add Expense
+        </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {fields.map((field) => (
@@ -213,7 +222,17 @@ export default function ExpensesPage() {
           Expense History
         </h2>
 
-        {expenses.length === 0 ? (
+        {loadingExpenses ? (
+          <div className="space-y-3 animate-pulse">
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div key={item} className="border p-4 rounded-lg bg-gray-100">
+                <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : expenses.length === 0 ? (
           <p className="text-gray-400 text-sm">No expenses yet...</p>
         ) : (
           <>
