@@ -523,7 +523,7 @@ export default function Admin() {
               >
                 <X />
               </button>
-              <h2 className="text-xl font-bold mb-4">
+              <h2 className="text-xl font-bold text-blue-600 mb-4">
                 {editingUser ? "Edit User" : "Add Staff"}
               </h2>
               <div className="space-y-3">
