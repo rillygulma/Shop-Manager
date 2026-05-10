@@ -47,7 +47,7 @@ export default function AddSales() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-5">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+      <h1 className="text-2xl font-bold text-green-600 mb-6 flex items-center gap-3">
         <button
           onClick={() => router.back()}
           className="p-2 bg-white rounded-lg shadow"
