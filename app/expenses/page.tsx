@@ -164,7 +164,7 @@ export default function ExpensesPage() {
       <div className="flex items-center gap-3 mb-4">
         <button
           onClick={() => router.back()}
-          className="p-2 bg-white rounded-lg shadow"
+          className="p-2 bg-white text-yellow-500 rounded-lg shadow"
         >
           <ArrowLeft size={18} />
         </button>
@@ -184,15 +184,20 @@ export default function ExpensesPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {fields.map((field) => (
-            <input
-              key={field}
-              type="number"
-              name={field}
-              value={form[field]}
-              onChange={handleChange}
-              placeholder={field}
-              className="border p-3 rounded-lg text-sm w-full"
-            />
+            <div key={field} className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 capitalize">
+                {field}
+              </label>
+
+              <input
+                type="number"
+                name={field}
+                value={form[field]}
+                onChange={handleChange}
+                placeholder={`Enter ${field}`}
+                className="border p-3 rounded-lg text-sm w-full"
+              />
+            </div>
           ))}
         </div>
 
