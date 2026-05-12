@@ -198,6 +198,7 @@ export default function LandingPage() {
         <p className="text-green-100/70">
           © {new Date().getFullYear()} StoreManager. All rights reserved.
         </p>
+        <span>Developed with ❤️ by Rilly Gulma</span>
       </footer>
     </div>
   );
