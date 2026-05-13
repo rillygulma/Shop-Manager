@@ -20,7 +20,9 @@ export async function POST(req: Request) {
     body.computer.typing +
     body.computer.printing +
     body.pos.charges +
-    body.drinks.coke;
+    body.drinks.softdrinks +
+    body.drinks.water +
+    body.drinks.other;
 
   const sale = await Sale.create({
     ...body,

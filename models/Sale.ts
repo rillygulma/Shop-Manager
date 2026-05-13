@@ -16,7 +16,7 @@ const SaleSchema = new mongoose.Schema(
     },
 
     drinks: {
-      coke: Number,
+      softdrinks: Number,
       water: Number,
       other: Number,
     },

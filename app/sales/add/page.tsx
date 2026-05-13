@@ -14,10 +14,10 @@ export default function AddSales() {
 
   const [posCharges, setPosCharges] = useState(0);
 
-  const [coke, setCoke] = useState(0);
+  const [softdrinks, setSoftdrinks] = useState(0);
   const [water, setWater] = useState(0);
 
-  const total = typing + printing + browsing + posCharges + coke + water;
+  const total = typing + printing + browsing + posCharges + softdrinks + water;
 
   const save = async () => {
     const loadingToast = toast.loading("Saving sales..."); // ⏳
@@ -28,7 +28,7 @@ export default function AddSales() {
         body: JSON.stringify({
           computer: { typing, printing, browsing, other: 0 },
           pos: { charges: posCharges },
-          drinks: { coke, water, other: 0 },
+          drinks: { softdrinks, water, other: 0 },
           date: new Date().toISOString(),
         }),
       });
@@ -81,7 +81,7 @@ export default function AddSales() {
         <div className="bg-white p-4 rounded-xl shadow">
           <h2 className="font-semibold mb-3 text-gray-700">🥤 Drinks</h2>
 
-          <Input label="Coke" value={coke} setValue={setCoke} />
+          <Input label="Soft Drinks" value={softdrinks} setValue={setSoftdrinks} />
           <Input label="Water" value={water} setValue={setWater} />
         </div>
       </div>
