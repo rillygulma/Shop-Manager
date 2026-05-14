@@ -91,7 +91,7 @@ export default function ReportPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 bg-white rounded-lg shadow"
+            className="p-2 text-amber-600 bg-white rounded-lg shadow"
           >
             <ArrowLeft size={18} />
           </button>

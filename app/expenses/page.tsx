@@ -34,6 +34,7 @@ export default function ExpensesPage() {
 
   // ✅ Search
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   const [form, setForm] = useState<ExpenseForm>({
     fuel: "",
@@ -95,18 +96,24 @@ export default function ExpensesPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // ✅ FILTER (SEARCH)
+  // ✅ FILTER (SEARCH + DATE)
   const filteredExpenses = expenses.filter((exp) => {
     const term = search.toLowerCase();
 
-    return (
+    const matchesSearch =
       exp.recordedBy?.email?.toLowerCase().includes(term) ||
       exp.recordedBy?.role?.toLowerCase().includes(term) ||
       exp.fuel.toString().includes(term) ||
       exp.internet.toString().includes(term) ||
       exp.other.toString().includes(term) ||
-      exp.total.toString().includes(term)
-    );
+      exp.total.toString().includes(term);
+
+    const matchesDate = dateFilter
+      ? exp.createdAt &&
+        new Date(exp.createdAt).toISOString().split("T")[0] === dateFilter
+      : true;
+
+    return matchesSearch && matchesDate;
   });
 
   // pagination logic (UPDATED)
@@ -211,17 +218,29 @@ export default function ExpensesPage() {
 
       {/* Expense List */}
       <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
-        {/* ✅ SEARCH INPUT */}
-        <input
-          type="text"
-          placeholder="Search expenses..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="border p-2 rounded-lg w-full mb-4 text-sm"
-        />
+        {/* ✅ SEARCH + CALENDAR FILTER */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <input
+            type="text"
+            placeholder="Search expenses..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="border p-2 rounded-lg w-full text-sm"
+          />
+
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => {
+              setDateFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="border p-2 rounded-lg text-sm"
+          />
+        </div>
 
         <h2 className="text-base text-yellow-500 sm:text-lg font-semibold mb-4">
           Expense History
