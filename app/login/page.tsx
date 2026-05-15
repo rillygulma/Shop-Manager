@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast"; // ✅ NEW
 
@@ -10,29 +9,54 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
 
   const login = async () => {
+    // ✅ Email Validation
+    if (!email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+
+    // ✅ Password Validation
+    if (!password.trim()) {
+      toast.error("Password is required");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
     try {
       setLoading(true);
       setError("");
 
       const res = await fetch("/api/auth/login", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        toast.success("Login successful 🎉"); // ✅ SUCCESS TOAST
+        toast.success("Login successful 🎉");
 
         setTimeout(() => {
-          window.location.href =
-            data.role === "admin" ? "/admin" : "/sales";
+          window.location.href = data.role === "admin" ? "/admin" : "/sales";
         }, 500);
       } else {
-        toast.error(data.error || "Invalid login"); // ❌ ERROR TOAST
+        toast.error(data.error || "Invalid login");
         setError(data.error || "Invalid login");
       }
     } catch (err: unknown) {
@@ -56,6 +80,7 @@ export default function Login() {
 
         <input
           type="email"
+          value={email}
           placeholder="Enter your email"
           onChange={(e) => setEmail(e.target.value)}
           className="border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 w-full mb-4 rounded-lg outline-none transition"
@@ -64,6 +89,7 @@ export default function Login() {
         <div className="relative mb-6">
           <input
             type={showPassword ? "text" : "password"}
+            value={password}
             placeholder="Enter your password"
             onChange={(e) => setPassword(e.target.value)}
             className="border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-200 p-3 w-full rounded-lg outline-none transition pr-10"
