@@ -157,13 +157,48 @@ export default function Admin() {
   const todayProfit = todaySalesTotal - todayExpenseTotal;
 
   const handleAddOrEditStaff = async () => {
+    // ✅ Email Validation
+    if (!staffEmail.trim()) {
+      setMessage("Email is required");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(staffEmail)) {
+      setMessage("Enter a valid email address");
+      return;
+    }
+
+    // ✅ Password Validation
+    if (!editingUser) {
+      if (!staffPassword.trim()) {
+        setMessage("Password is required");
+        return;
+      }
+
+      if (staffPassword.length < 6) {
+        setMessage("Password must be at least 6 characters");
+        return;
+      }
+    }
+
+    // ✅ Role Validation
+    if (!staffRole) {
+      setMessage("Please select a role");
+      return;
+    }
+
     setLoading(true);
     setMessage("");
+
     try {
       const url = editingUser
         ? `/api/users/${editingUser._id}`
         : "/api/auth/register";
+
       const method = editingUser ? "PUT" : "POST";
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -173,22 +208,32 @@ export default function Admin() {
           role: staffRole,
         }),
       });
+
       const data = await res.json();
+
       if (res.ok) {
         setMessage(editingUser ? "User updated!" : "Staff created!");
+
         setStaffEmail("");
         setStaffPassword("");
         setStaffRole("sales");
         setEditingUser(null);
+
         handleFetchUsers();
-      } else setMessage(data.error || "Failed");
+
+        setTimeout(() => {
+          setShowModal(false);
+          setMessage("");
+        }, 1000);
+      } else {
+        setMessage(data.error || "Failed");
+      }
     } catch {
       setMessage("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
-
   const handleDeleteUser = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     try {
@@ -536,15 +581,25 @@ export default function Admin() {
                 />
                 <input
                   type="password"
-                  placeholder="Password"
+                  placeholder={
+                    editingUser
+                      ? "Leave blank to keep current password"
+                      : "Password"
+                  }
                   value={staffPassword}
-                  onChange={(e) => setStaffPassword(e.target.value)}
-                  className="w-full border p-2 rounded-lg"
+                  onChange={(e) => {
+                    setStaffPassword(e.target.value);
+                    setMessage("");
+                  }}
+                  className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-300"
                 />
                 <select
                   value={staffRole}
-                  onChange={(e) => setStaffRole(e.target.value)}
-                  className="w-full border p-2 rounded-lg"
+                  onChange={(e) => {
+                    setStaffRole(e.target.value);
+                    setMessage("");
+                  }}
+                  className="w-full border p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-300"
                 >
                   <option value="sales">Sales</option>
                   <option value="admin">Admin</option>
