@@ -29,6 +29,10 @@ export default function Sales() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
 
+  // ✅ Search + Calendar Filter
+const [search, setSearch] = useState("");
+const [dateFilter, setDateFilter] = useState("");
+
   useEffect(() => {
     fetch("/api/sales")
       .then((res) => res.json())
@@ -63,7 +67,20 @@ export default function Sales() {
     });
   };
 
-  const filteredSales = filterSales(sales);
+  const filteredSales = filterSales(sales).filter((sale) => {
+  const term = search.toLowerCase();
+
+  const matchesSearch =
+    sale.totalSales.toString().includes(term) ||
+    sale.recordedBy?.email?.toLowerCase().includes(term) ||
+    new Date(sale.date).toLocaleString().toLowerCase().includes(term);
+
+  const matchesDate = dateFilter
+    ? new Date(sale.date).toISOString().split("T")[0] === dateFilter
+    : true;
+
+  return matchesSearch && matchesDate;
+});
 
   // ✅ Pagination logic
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -228,6 +245,28 @@ export default function Sales() {
             Recent Sales
           </h2>
 
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+  <input
+    type="text"
+    placeholder="Search sales..."
+    value={search}
+    onChange={(e) => {
+      setSearch(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="border p-2 rounded-lg w-full text-sm"
+  />
+
+  <input
+    type="date"
+    value={dateFilter}
+    onChange={(e) => {
+      setDateFilter(e.target.value);
+      setCurrentPage(1);
+    }}
+    className="border p-2 rounded-lg text-sm"
+  />
+</div>
           {filteredSales.length === 0 ? (
             <p className="text-gray-400 text-sm">No sales recorded yet...</p>
           ) : (
