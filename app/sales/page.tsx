@@ -30,8 +30,8 @@ export default function Sales() {
   const ITEMS_PER_PAGE = 5;
 
   // ✅ Search + Calendar Filter
-const [search, setSearch] = useState("");
-const [dateFilter, setDateFilter] = useState("");
+  const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   useEffect(() => {
     fetch("/api/sales")
@@ -68,19 +68,19 @@ const [dateFilter, setDateFilter] = useState("");
   };
 
   const filteredSales = filterSales(sales).filter((sale) => {
-  const term = search.toLowerCase();
+    const term = search.toLowerCase();
 
-  const matchesSearch =
-    sale.totalSales.toString().includes(term) ||
-    sale.recordedBy?.email?.toLowerCase().includes(term) ||
-    new Date(sale.date).toLocaleString().toLowerCase().includes(term);
+    const matchesSearch =
+      sale.totalSales.toString().includes(term) ||
+      sale.recordedBy?.email?.toLowerCase().includes(term) ||
+      new Date(sale.date).toLocaleString().toLowerCase().includes(term);
 
-  const matchesDate = dateFilter
-    ? new Date(sale.date).toISOString().split("T")[0] === dateFilter
-    : true;
+    const matchesDate = dateFilter
+      ? new Date(sale.date).toISOString().split("T")[0] === dateFilter
+      : true;
 
-  return matchesSearch && matchesDate;
-});
+    return matchesSearch && matchesDate;
+  });
 
   // ✅ Pagination logic
   const totalPages = Math.ceil(filteredSales.length / ITEMS_PER_PAGE);
@@ -246,27 +246,27 @@ const [dateFilter, setDateFilter] = useState("");
           </h2>
 
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-  <input
-    type="text"
-    placeholder="Search sales..."
-    value={search}
-    onChange={(e) => {
-      setSearch(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="border p-2 rounded-lg w-full text-sm"
-  />
+            <input
+              type="text"
+              placeholder="Search sales..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="border p-2 rounded-lg w-full text-sm"
+            />
 
-  <input
-    type="date"
-    value={dateFilter}
-    onChange={(e) => {
-      setDateFilter(e.target.value);
-      setCurrentPage(1);
-    }}
-    className="border p-2 rounded-lg text-sm"
-  />
-</div>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="border p-2 rounded-lg text-sm"
+            />
+          </div>
           {filteredSales.length === 0 ? (
             <p className="text-gray-400 text-sm">No sales recorded yet...</p>
           ) : (
