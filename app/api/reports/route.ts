@@ -404,7 +404,7 @@ export async function GET(req: Request) {
         // -----------------------------------------------------
 
         const createdAt =
-          transaction.createdAt;
+          transaction.get("createdAt");
 
         if (createdAt) {
           const day = new Date(
