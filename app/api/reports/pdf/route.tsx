@@ -1,7 +1,8 @@
 import { connectDB } from "@/lib/mongodb";
 import Sale from "@/models/Sale";
-import User from "@/models/User";
 import Expense from "@/models/Expense";
+import POSTransaction from "@/models/POSTransaction";
+import User from "@/models/User";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth";
 import { renderToBuffer } from "@react-pdf/renderer";
@@ -14,29 +15,25 @@ export const dynamic = "force-dynamic";
 // TYPES
 // =====================================================
 
+type RecordedBy = {
+  email?: string;
+  fullName?: string;
+  role?: string;
+} | null;
+
 type SaleDocument = {
   totalSales?: number;
-
   computer?: {
     typing?: number;
     printing?: number;
     photocopying?: number;
     browsing?: number;
   };
-
-  pos?: {
-    charges?: number;
-  };
-
   drinks?: {
     coke?: number;
     water?: number;
   };
-
-  recordedBy?: {
-    email?: string;
-  } | null;
-
+  recordedBy?: RecordedBy;
   createdAt: Date | string;
 };
 
@@ -48,8 +45,15 @@ type ExpenseDocument = {
   createdAt: Date | string;
 };
 
+type POSTransactionDocument = {
+  amount?: number;
+  charge?: number;
+  recordedBy?: RecordedBy;
+  createdAt: Date | string;
+};
+
 // =====================================================
-// GET REPORT
+// GET REPORT PDF
 // =====================================================
 
 export async function GET(req: Request) {
@@ -60,12 +64,7 @@ export async function GET(req: Request) {
 
     await connectDB();
 
-    // ===================================================
-    // REGISTER USER MODEL
-    // ===================================================
-
-    // This ensures the User model is registered before
-    // Sale.populate("recordedBy") is executed.
+    // Make sure User model is registered
     void User;
 
     // ===================================================
@@ -73,7 +72,6 @@ export async function GET(req: Request) {
     // ===================================================
 
     const cookieStore = await cookies();
-
     const token = cookieStore.get("token")?.value;
 
     if (!token) {
@@ -124,6 +122,10 @@ export async function GET(req: Request) {
     let startDate: Date;
     let endDate: Date;
 
+    // ---------------------------------------------------
+    // CUSTOM DATE RANGE
+    // ---------------------------------------------------
+
     if (startDateQuery && endDateQuery) {
       startDate = new Date(startDateQuery);
       endDate = new Date(endDateQuery);
@@ -168,158 +170,179 @@ export async function GET(req: Request) {
         );
       }
     } else {
-      switch (filter) {
-        // ===============================================
-        // TODAY
-        // ===============================================
+      // -------------------------------------------------
+      // PREDEFINED FILTERS
+      // -------------------------------------------------
 
-        case "today": {
-          startDate = new Date();
+      if (filter === "today") {
+        startDate = new Date();
 
-          startDate.setHours(
-            0,
-            0,
-            0,
-            0,
-          );
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0,
+        );
 
-          endDate = new Date();
+        endDate = new Date();
 
-          endDate.setHours(
-            23,
-            59,
-            59,
-            999,
-          );
+        endDate.setHours(
+          23,
+          59,
+          59,
+          999,
+        );
+      } else if (filter === "week") {
+        startDate = new Date();
 
-          break;
-        }
+        startDate.setDate(
+          now.getDate() - 7,
+        );
 
-        // ===============================================
-        // LAST 7 DAYS
-        // ===============================================
+        endDate = new Date();
 
-        case "week": {
-          startDate = new Date();
+        endDate.setHours(
+          23,
+          59,
+          59,
+          999,
+        );
+      } else if (filter === "month") {
+        startDate = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1,
+        );
 
-          startDate.setDate(
-            now.getDate() - 7,
-          );
+        startDate.setHours(
+          0,
+          0,
+          0,
+          0,
+        );
 
-          startDate.setHours(
-            0,
-            0,
-            0,
-            0,
-          );
+        endDate = new Date();
 
-          endDate = new Date();
+        endDate.setHours(
+          23,
+          59,
+          59,
+          999,
+        );
+      } else {
+        // ALL RECORDS
+        startDate = new Date(0);
 
-          endDate.setHours(
-            23,
-            59,
-            59,
-            999,
-          );
+        endDate = new Date();
 
-          break;
-        }
-
-        // ===============================================
-        // CURRENT MONTH
-        // ===============================================
-
-        case "month": {
-          startDate = new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            1,
-          );
-
-          startDate.setHours(
-            0,
-            0,
-            0,
-            0,
-          );
-
-          endDate = new Date();
-
-          endDate.setHours(
-            23,
-            59,
-            59,
-            999,
-          );
-
-          break;
-        }
-
-        // ===============================================
-        // ALL
-        // ===============================================
-
-        case "all":
-        default: {
-          startDate = new Date(0);
-
-          endDate = new Date();
-
-          endDate.setHours(
-            23,
-            59,
-            59,
-            999,
-          );
-
-          break;
-        }
+        endDate.setHours(
+          23,
+          59,
+          59,
+          999,
+        );
       }
     }
 
     // ===================================================
-    // FETCH SALES
+    // FETCH DATA
     // ===================================================
 
-    const sales =
-      (await Sale.find({
+    const [
+      sales,
+      expenses,
+      posTransactions,
+    ] = await Promise.all([
+      Sale.find({
         createdAt: {
           $gte: startDate,
           $lte: endDate,
         },
       })
-        .populate({
-          path: "recordedBy",
-          select: "email",
-          model: User,
-        })
+        .populate(
+          "recordedBy",
+          "email fullName role",
+        )
         .sort({
-          createdAt: 1,
+          createdAt: -1,
         })
-        .lean()) as unknown as SaleDocument[];
+        .lean() as unknown as Promise<
+        SaleDocument[]
+      >,
 
-    // ===================================================
-    // FETCH EXPENSES
-    // ===================================================
-
-    const expenses =
-      (await Expense.find({
+      Expense.find({
         createdAt: {
           $gte: startDate,
           $lte: endDate,
         },
       })
         .sort({
-          createdAt: 1,
+          createdAt: -1,
         })
-        .lean()) as unknown as ExpenseDocument[];
+        .lean() as unknown as Promise<
+        ExpenseDocument[]
+      >,
+
+      POSTransaction.find({
+        createdAt: {
+          $gte: startDate,
+          $lte: endDate,
+        },
+      })
+        .populate(
+          "recordedBy",
+          "email fullName role",
+        )
+        .sort({
+          createdAt: -1,
+        })
+        .lean() as unknown as Promise<
+        POSTransactionDocument[]
+      >,
+    ]);
 
     // ===================================================
-    // INITIAL VALUES
+    // REPORT STRUCTURE
     // ===================================================
 
     let totalSales = 0;
+
+    let salesRecordsTotal = 0;
+
+    let totalPOSAmount = 0;
+
+    let totalPOSCharges = 0;
+
     let totalExpenses = 0;
+
+    // ===================================================
+    // COMPUTER SERVICES
+    // ===================================================
+
+    const computer = {
+      typing: 0,
+      printing: 0,
+      photocopying: 0,
+      browsing: 0,
+    };
+
+    // ===================================================
+    // POS
+    // ===================================================
+
+    const pos = {
+      amount: 0,
+      charges: 0,
+    };
+
+    // ===================================================
+    // DRINKS
+    // ===================================================
+
+    const drinks = {
+      coke: 0,
+      water: 0,
+    };
 
     // ===================================================
     // EXPENSE DETAILS
@@ -333,33 +356,17 @@ export async function GET(req: Request) {
     };
 
     // ===================================================
-    // SALES BREAKDOWN
-    // ===================================================
-
-    const computer = {
-      typing: 0,
-      printing: 0,
-      photocopying: 0,
-      browsing: 0,
-    };
-
-    const pos = {
-      charges: 0,
-    };
-
-    const drinks = {
-      coke: 0,
-      water: 0,
-    };
-
-    // ===================================================
-    // STAFF & DAILY SALES
+    // STAFF
     // ===================================================
 
     const staff: Record<
       string,
       number
     > = {};
+
+    // ===================================================
+    // DAILY
+    // ===================================================
 
     const daily: Record<
       string,
@@ -371,18 +378,19 @@ export async function GET(req: Request) {
     // ===================================================
 
     sales.forEach((sale) => {
-      // ===============================================
-      // TOTAL SALE
-      // ===============================================
-
-      const amount =
+      const saleAmount =
         Number(sale.totalSales) || 0;
 
-      totalSales += amount;
+      // -------------------------------------------------
+      // SALES RECORD TOTAL
+      // -------------------------------------------------
 
-      // ===============================================
+      salesRecordsTotal +=
+        saleAmount;
+
+      // -------------------------------------------------
       // COMPUTER SERVICES
-      // ===============================================
+      // -------------------------------------------------
 
       computer.typing +=
         Number(
@@ -404,18 +412,9 @@ export async function GET(req: Request) {
           sale.computer?.browsing,
         ) || 0;
 
-      // ===============================================
-      // POS
-      // ===============================================
-
-      pos.charges +=
-        Number(
-          sale.pos?.charges,
-        ) || 0;
-
-      // ===============================================
+      // -------------------------------------------------
       // DRINKS
-      // ===============================================
+      // -------------------------------------------------
 
       drinks.coke +=
         Number(
@@ -427,104 +426,181 @@ export async function GET(req: Request) {
           sale.drinks?.water,
         ) || 0;
 
-      // ===============================================
-      // STAFF PERFORMANCE
-      // ===============================================
+      // -------------------------------------------------
+      // STAFF
+      // -------------------------------------------------
 
       const email =
         sale.recordedBy?.email ||
-        "Unknown Staff";
+        "unknown";
 
       staff[email] =
         (staff[email] || 0) +
-        amount;
+        saleAmount;
 
-      // ===============================================
+      // -------------------------------------------------
       // DAILY SALES
-      // ===============================================
+      // -------------------------------------------------
 
-      const saleDate = new Date(
-        sale.createdAt,
-      );
+      if (sale.createdAt) {
+        const day =
+          new Date(
+            sale.createdAt,
+          ).toDateString();
 
-      const date =
-        saleDate.toLocaleDateString(
-          "en-NG",
-          {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          },
-        );
-
-      daily[date] =
-        (daily[date] || 0) +
-        amount;
+        daily[day] =
+          (daily[day] || 0) +
+          saleAmount;
+      }
     });
+
+    // ===================================================
+    // PROCESS POS TRANSACTIONS
+    // ===================================================
+
+    posTransactions.forEach(
+      (transaction) => {
+        const amount =
+          Number(
+            transaction.amount,
+          ) || 0;
+
+        const charge =
+          Number(
+            transaction.charge,
+          ) || 0;
+
+        // ------------------------------------------------
+        // POS AMOUNT
+        // ------------------------------------------------
+
+        totalPOSAmount +=
+          amount;
+
+        pos.amount +=
+          amount;
+
+        // ------------------------------------------------
+        // POS CHARGES
+        // ------------------------------------------------
+
+        totalPOSCharges +=
+          charge;
+
+        pos.charges +=
+          charge;
+
+        // ------------------------------------------------
+        // STAFF PERFORMANCE
+        // ------------------------------------------------
+
+        const email =
+          transaction.recordedBy
+            ?.email ||
+          "unknown";
+
+        staff[email] =
+          (staff[email] || 0) +
+          amount +
+          charge;
+
+        // ------------------------------------------------
+        // DAILY SALES
+        // ------------------------------------------------
+
+        if (
+          transaction.createdAt
+        ) {
+          const day =
+            new Date(
+              transaction.createdAt,
+            ).toDateString();
+
+          daily[day] =
+            (daily[day] || 0) +
+            amount +
+            charge;
+        }
+      },
+    );
+
+    // ===================================================
+    // TOTAL SALES
+    // ===================================================
+
+    totalSales =
+      salesRecordsTotal +
+      totalPOSAmount +
+      totalPOSCharges;
 
     // ===================================================
     // PROCESS EXPENSES
     // ===================================================
 
-    expenses.forEach((expense) => {
-      // ===============================================
-      // EXPENSE CATEGORIES
-      // ===============================================
+    expenses.forEach(
+      (expense) => {
+        const fuel =
+          Number(
+            expense.fuel,
+          ) || 0;
 
-      const fuel =
-        Number(expense.fuel) || 0;
+        const internet =
+          Number(
+            expense.internet,
+          ) || 0;
 
-      const internet =
-        Number(expense.internet) || 0;
+        const other =
+          Number(
+            expense.other,
+          ) || 0;
 
-      const other =
-        Number(expense.other) || 0;
+        const total =
+          Number(
+            expense.total,
+          ) || 0;
 
-      // ===============================================
-      // USE STORED TOTAL
-      // ===============================================
+        expenseDetails.fuel +=
+          fuel;
 
-      const storedTotal =
-        Number(expense.total) || 0;
+        expenseDetails.internet +=
+          internet;
 
-      // ===============================================
-      // ADD EXPENSE DETAILS
-      // ===============================================
+        expenseDetails.other +=
+          other;
 
-      expenseDetails.fuel += fuel;
-
-      expenseDetails.internet +=
-        internet;
-
-      expenseDetails.other += other;
-
-      // ===============================================
-      // TOTAL EXPENSES
-      // ===============================================
-
-      totalExpenses += storedTotal;
-    });
-
-    // ===================================================
-    // SET EXPENSE TOTAL
-    // ===================================================
+        totalExpenses +=
+          total;
+      },
+    );
 
     expenseDetails.total =
       totalExpenses;
 
     // ===================================================
-    // FINANCIAL CALCULATIONS
+    // TOTAL TRANSACTIONS
     // ===================================================
+
+    const totalTransactions =
+      sales.length +
+      posTransactions.length;
+
+    // ===================================================
+    // AVERAGE SALE
+    // ===================================================
+
+    const averageSale =
+      totalTransactions > 0
+        ? totalSales /
+          totalTransactions
+        : 0;
+
+    // ===================================================
+    // PROFIT
+    // =====================================================
 
     const profit =
       totalSales -
       totalExpenses;
-
-    const averageSale =
-      sales.length > 0
-        ? totalSales /
-          sales.length
-        : 0;
 
     // ===================================================
     // CATEGORY TOTALS
@@ -536,21 +612,23 @@ export async function GET(req: Request) {
       computer.photocopying +
       computer.browsing;
 
+    const posTotal =
+      totalPOSAmount +
+      totalPOSCharges;
+
     const drinksTotal =
       drinks.coke +
       drinks.water;
 
     const categories = [
       {
-        name: "Computer Services",
+        name: "Computer",
         value: computerTotal,
       },
-
       {
         name: "POS",
-        value: pos.charges,
+        value: posTotal,
       },
-
       {
         name: "Drinks",
         value: drinksTotal,
@@ -561,7 +639,7 @@ export async function GET(req: Request) {
     );
 
     // ===================================================
-    // GENERATE PDF DOCUMENT
+    // GENERATE PDF
     // ===================================================
 
     const document = (
@@ -569,59 +647,36 @@ export async function GET(req: Request) {
         startDate={startDate}
         endDate={endDate}
 
-        // ===============================================
-        // FINANCIAL SUMMARY
-        // ===============================================
-
+        // Financial Summary
         totalSales={totalSales}
         totalExpenses={
           totalExpenses
         }
-
         profit={profit}
-
         averageSale={
           averageSale
         }
-
         totalTransactions={
-          sales.length
+          totalTransactions
         }
 
-        // ===============================================
-        // SALES BREAKDOWN
-        // ===============================================
-
+        // Sales Breakdown
         computer={computer}
-
         pos={pos}
-
         drinks={drinks}
 
-        // ===============================================
-        // EXPENSE DETAILS
-        // ===============================================
-
+        // Expenses
         expenses={
           expenseDetails
         }
 
-        // ===============================================
-        // STAFF
-        // ===============================================
-
+        // Staff
         staff={staff}
 
-        // ===============================================
-        // DAILY SALES
-        // ===============================================
-
+        // Daily Sales
         daily={daily}
 
-        // ===============================================
-        // CATEGORIES
-        // ===============================================
-
+        // Categories
         categories={
           categories
         }
@@ -639,7 +694,7 @@ export async function GET(req: Request) {
 
     // ===================================================
     // FILE NAME
-    // ===================================================
+    // =====================================================
 
     const filename =
       `business-report-${startDate
@@ -656,7 +711,6 @@ export async function GET(req: Request) {
       new Uint8Array(pdfBuffer),
       {
         status: 200,
-
         headers: {
           "Content-Type":
             "application/pdf",
@@ -673,10 +727,6 @@ export async function GET(req: Request) {
       },
     );
   } catch (error) {
-    // ===================================================
-    // ERROR
-    // ===================================================
-
     console.error(
       "PDF REPORT ERROR:",
       error,
